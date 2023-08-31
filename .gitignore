@@ -4,3 +4,5 @@ pandaPIparser
 *.sas
 *.htn
 *.hddl
+src/cmdline.c
+src/cmdline.h
