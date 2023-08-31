@@ -79,8 +79,10 @@
 %type <formula> gd_equality_constraint 
 %type <formula> precondition_option
 %type <formula> effect_option
+%type <formulae> nd-effects
 %type <formulae> effect-list
 %type <formula> effect
+%type <formulae> effects
 %type <formula> eff_empty
 %type <formula> eff_conjunction
 %type <formula> eff_universal
@@ -318,20 +320,34 @@ task_or_action: KEY_TASK {$$=true;} | KEY_ACTION {$$=false;}
 task_def : '(' task_or_action NAME
 			parameters-option
 			precondition_option
-			effect_option ')'{
+			nd-effects ')'{
 				// found a new task, add it to list
-				parsed_task t;
-				t.name = $3;
-				t.arguments = $4;
-				t.prec = $5; 
-				t.eff = $6;
-
-				if ($2) parsed_abstract.push_back(t); else parsed_primitive.push_back(t);
-}
+				for (int i=0; i<$6->size(); i++){
+					parsed_task t;
+					string s($3);
+					s.append(std::to_string(i));
+					t.name = s;
+					t.arguments = $4;
+					t.prec = $5; 
+					t.eff = $6->at(i);
+					if ($2) parsed_abstract.push_back(t); else parsed_primitive.push_back(t);
+				}
+			}
 
 precondition_option: KEY_PRECONDITION gd {$$ = $2;} | {$$ = new general_formula(); $$->type = EMPTY;}
 effect_option: KEY_EFFECT effect {$$ = $2;} | {$$ = new general_formula(); $$->type = EMPTY;}
 
+nd-effects: KEY_EFFECT effects {$$ = $2;} | {auto a = new std::vector<general_formula*>;
+											 auto b = new general_formula();
+											 b->type = EMPTY;
+											 a->push_back(b);
+											 $$=a;}
+effects: effect {
+					auto a = new std::vector<general_formula*>;
+					a->push_back($1);
+					$$ = a;
+				}
+		 | '(' KEY_OR effect-list ')' {$$ = $3;}
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // Method Definition
 // @HDDL
